@@ -2,16 +2,12 @@
 #coding: utf-8
 from bs4 import BeautifulSoup
 import logging
+import requests
 import sys
-
-if sys.version_info < (3, 0):
-    from urllib2 import urlopen
-else:
-    from urllib.request import urlopen
 
 def get_sio_dinner(restaurant_id = 284):
     url = "https://www.sio.no/hjem/_window/forside+-+forsidebokser+(4+knapper)?s=%d" % restaurant_id
-    content = urlopen(url).read()
+    content = requests.get(url).text
     soup = BeautifulSoup(content, "html.parser")
 
     output = ""
