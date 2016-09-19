@@ -3,9 +3,13 @@ About
 
 Simple XMPP bot using the [SleekXMPP python library](http://sleekxmpp.com/).
 
-Running
-=======
+Install and run
+===============
 
-With python2 or python3:
+You should use python2 since there is a bug with sleexmpp and dnspython in python3.
 
-$ python mybot.py --jid username@chat.uio.no/mybot --room room@conference.chat.uio.no --nick mybot
+	$ virtualenv venv
+	$ source venv/bin/activate
+	$ pip install -r requirements.txt
+	$ python mybot.py --jid username@chat.uio.no/mybot --room room@conference.chat.uio.no --nick mybot
+
