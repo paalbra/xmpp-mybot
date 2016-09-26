@@ -9,6 +9,7 @@ import getpass
 import sleekxmpp
 
 from sio import get_sio_dinner
+from reisapi import get_departures
 
 # Python versions before 3.0 do not use UTF-8 encoding
 # by default. To ensure that Unicode is handled properly
@@ -37,14 +38,17 @@ class MyBot(sleekxmpp.ClientXMPP):
         self.plugin['xep_0045'].joinMUC(self.room, self.nick, wait=True)
 
     def muc_message(self, msg):
-        message = None
-
         if msg['mucnick'] != self.nick:
+
             if msg['body'] == "!lunch":
                 message = get_sio_dinner()
+                self.send_message(mto=msg['from'].bare, mbody=message, mtype="groupchat")
 
-        if message is not None:
-            self.send_message(mto=msg['from'].bare, mbody=message, mtype="groupchat")
+            if msg['body'] == "!ruter":
+                for platform, departures in get_departures().iteritems():
+                    message = "Platform {}: ".format(platform)
+                    message += "; ".join(departures)
+                    self.send_message(mto=msg['from'].bare, mbody=message, mtype="groupchat")
 
     def message(self, msg):
         if msg['type'] in ('chat', 'normal'):
