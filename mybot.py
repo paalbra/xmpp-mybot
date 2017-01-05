@@ -1,7 +1,10 @@
 #!/usr/bin/python
 #coding: utf-8
+from datetime import datetime
 from optparse import OptionParser
 from pprint import pprint
+from threading import Timer
+import dateparser
 import sys
 import logging
 import getpass
@@ -49,6 +52,34 @@ class MyBot(sleekxmpp.ClientXMPP):
                     message = "Platform {}: ".format(platform)
                     message += "; ".join(departures)
                     self.send_message(mto=msg['from'].bare, mbody=message, mtype="groupchat")
+
+            if msg['body'].startswith("!reminder "):
+                now = datetime.now()
+                try:
+                    date_string, message = [s.strip() for s in msg['body'][10:].split(";", 1)]
+                except:
+                    self.send_message(mto=msg['from'].bare, mbody="Error. Use: \"!reminder in 10min; Get more coffee!\" ", mtype="groupchat")
+                    return
+
+                date = dateparser.parse(date_string)
+                message = "%s: %s" % (msg["from"].resource, message)
+
+                if date is None:
+                    self.send_message(mto=msg['from'].bare, mbody="Error. Weird date/time.", mtype="groupchat")
+                    return
+
+                seconds = (date - now).total_seconds()
+
+                if seconds < 0:
+                    self.send_message(mto=msg['from'].bare, mbody="Error. Can't remind you in the past.", mtype="groupchat")
+                    return
+                elif seconds > 3600:
+                    self.send_message(mto=msg['from'].bare, mbody="Error. Please set reminder to less than 1 hour.", mtype="groupchat")
+                    return
+
+                print("Reminder in %d sec at %s." % (seconds, date.isoformat()))
+                self.send_message(mto=msg['from'].bare, mbody="Reminder set at %s" % date.isoformat(), mtype="groupchat")
+                Timer(seconds, self.send_message, kwargs={"mto": msg['from'].bare, "mbody": message, "mtype": "groupchat"}).start()
 
     def message(self, msg):
         if msg['type'] in ('chat', 'normal'):
