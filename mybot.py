@@ -61,7 +61,7 @@ class MyBot(sleekxmpp.ClientXMPP):
                     self.send_message(mto=msg['from'].bare, mbody="Error. Expected: \"!reminder <date/time string>; <reminder message>\" ", mtype="groupchat")
                     return
 
-                date = dateparser.parse(date_string)
+                date = dateparser.parse(date_string, settings={'PREFER_DATES_FROM': 'future'})
                 message = "%s: %s" % (msg["from"].resource, message)
 
                 if date is None:
