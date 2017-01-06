@@ -58,14 +58,14 @@ class MyBot(sleekxmpp.ClientXMPP):
                 try:
                     date_string, message = [s.strip() for s in msg['body'][10:].split(";", 1)]
                 except:
-                    self.send_message(mto=msg['from'].bare, mbody="Error. Use: \"!reminder in 10min; Get more coffee!\" ", mtype="groupchat")
+                    self.send_message(mto=msg['from'].bare, mbody="Error. Expected: \"!reminder <date/time string>; <reminder message>\" ", mtype="groupchat")
                     return
 
                 date = dateparser.parse(date_string)
                 message = "%s: %s" % (msg["from"].resource, message)
 
                 if date is None:
-                    self.send_message(mto=msg['from'].bare, mbody="Error. Weird date/time.", mtype="groupchat")
+                    self.send_message(mto=msg['from'].bare, mbody="Error. Weird date/time. Docs: https://dateparser.readthedocs.io/en/latest/", mtype="groupchat")
                     return
 
                 seconds = (date - now).total_seconds()
