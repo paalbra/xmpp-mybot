@@ -55,6 +55,7 @@ class MyBot(sleekxmpp.ClientXMPP):
 
             if msg['body'].startswith("!reminder "):
                 now = datetime.now()
+                max_seconds = 3600*24*7 # Do not create reminders > 1 week
                 try:
                     date_string, message = [s.strip() for s in msg['body'][10:].split(";", 1)]
                 except:
@@ -73,8 +74,8 @@ class MyBot(sleekxmpp.ClientXMPP):
                 if seconds < 0:
                     self.send_message(mto=msg['from'].bare, mbody="Error. Can't remind you in the past.", mtype="groupchat")
                     return
-                elif seconds > 3600:
-                    self.send_message(mto=msg['from'].bare, mbody="Error. Please set reminder to less than 1 hour.", mtype="groupchat")
+                elif seconds > max_seconds:
+                    self.send_message(mto=msg['from'].bare, mbody="Error. Please set reminder to less than 1 week.", mtype="groupchat")
                     return
 
                 print("Reminder in %d sec at %s." % (seconds, date.isoformat()))
