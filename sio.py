@@ -6,7 +6,7 @@ import requests
 import sys
 
 def get_sio_dinner(restaurant_id = 284):
-    url = "https://www.sio.no/hjem/_window/forside+-+forsidebokser+(4+knapper)?s=%d" % restaurant_id
+    url = "https://sio.no/mat-og-drikke/_window/mat+og+drikke+-+dagens+middag?s=%d" % restaurant_id
     content = requests.get(url).text
     soup = BeautifulSoup(content, "html.parser")
 
