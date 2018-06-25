@@ -10,7 +10,7 @@ import getpass
 
 import sleekxmpp
 
-from sio import get_sio_dinner
+from sio import get_menu
 from reisapi import get_departures
 
 # Python versions before 3.0 do not use UTF-8 encoding
@@ -44,7 +44,16 @@ class MyBot(sleekxmpp.ClientXMPP):
         if msg['mucnick'] != self.nick:
 
             if msg['body'] == "!lunch":
-                message = get_sio_dinner()
+                message = get_menu()
+                self.send_message(mto=msg['from'].bare, mbody=message, mtype="groupchat")
+
+            if msg['body'].startswith("!lunch "):
+                restaurant = msg['body'].split(" ", 1)[1]
+                menu = get_menu(restaurant)
+                if menu:
+                    message = menu
+                else:
+                    message = "Unable to get menu :("
                 self.send_message(mto=msg['from'].bare, mbody=message, mtype="groupchat")
 
             if msg['body'] == "!ruter":
