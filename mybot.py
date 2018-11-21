@@ -1,8 +1,8 @@
 #!/usr/bin/python
 # coding: utf-8
 from datetime import datetime
-from optparse import OptionParser
 from threading import Timer
+import argparse
 import dateparser
 import sys
 import logging
@@ -88,28 +88,28 @@ class MyBot(sleekxmpp.ClientXMPP):
 
 
 if __name__ == '__main__':
-    optp = OptionParser()
+    parser = argparse.ArgumentParser()
 
-    optp.add_option('-q', '--quiet', help='set logging to ERROR', action='store_const', dest='loglevel', const=logging.ERROR, default=logging.INFO)
-    optp.add_option('-d', '--debug', help='set logging to DEBUG', action='store_const', dest='loglevel', const=logging.DEBUG, default=logging.INFO)
-    optp.add_option("-j", "--jid", dest="jid", help="JID to use")
-    optp.add_option("-r", "--room", dest="room", help="MUC room to join")
-    optp.add_option("-n", "--nick", dest="nick", help="MUC nickname")
+    parser.add_argument("-q", "--quiet", help="set logging to ERROR", action="store_const", dest="loglevel", const=logging.ERROR, default=logging.INFO)
+    parser.add_argument("-d", "--debug", help="set logging to DEBUG", action="store_const", dest="loglevel", const=logging.DEBUG, default=logging.INFO)
+    parser.add_argument("-j", "--jid", dest="jid", help="JID to use")
+    parser.add_argument("-r", "--room", dest="room", help="MUC room to join")
+    parser.add_argument("-n", "--nick", dest="nick", help="MUC nickname")
 
-    opts, args = optp.parse_args()
+    args = parser.parse_args()
 
-    logging.basicConfig(level=opts.loglevel, format='%(levelname)-8s %(message)s')
+    logging.basicConfig(level=args.loglevel, format='%(levelname)-8s %(message)s')
 
-    if opts.jid is None:
-        opts.jid = input("JID: ")
-    if opts.room is None:
-        opts.room = input("MUC room: ")
-    if opts.nick is None:
-        opts.nick = input("MUC nickname: ")
+    if args.jid is None:
+        args.jid = input("JID: ")
+    if args.room is None:
+        args.room = input("MUC room: ")
+    if args.nick is None:
+        args.nick = input("MUC nickname: ")
 
     password = getpass.getpass("Password: ")
 
-    xmpp = MyBot(opts.jid, password, opts.room, opts.nick)
+    xmpp = MyBot(args.jid, password, args.room, args.nick)
     xmpp.register_plugin('xep_0030')  # Service Discovery
     xmpp.register_plugin('xep_0045')  # Multi-User Chat
     xmpp.register_plugin('xep_0199')  # XMPP Ping
