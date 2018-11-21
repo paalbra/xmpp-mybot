@@ -4,6 +4,7 @@ from datetime import datetime
 from threading import Timer
 import argparse
 import dateparser
+import multiprocessing
 import sys
 import logging
 import getpass
@@ -89,6 +90,23 @@ class MyBot(sleekxmpp.ClientXMPP):
             msg.reply("I'm a bot. Hurr durr.").send()
 
 
+class MyBotProcess(multiprocessing.Process):
+
+    def __init__(self, xmpp):
+        self.xmpp = xmpp
+        super().__init__()
+
+    def run(self):
+        xmpp.register_plugin('xep_0030')  # Service Discovery
+        xmpp.register_plugin('xep_0045')  # Multi-User Chat
+        xmpp.register_plugin('xep_0199')  # XMPP Ping
+        if xmpp.connect():
+            xmpp.process(block=True)
+            print("Done")
+        else:
+            print("Unable to connect.")
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
@@ -112,13 +130,9 @@ if __name__ == '__main__':
     password = getpass.getpass("Password: ")
 
     xmpp = MyBot(args.jid, password, args.room, args.nick)
-    xmpp.register_plugin('xep_0030')  # Service Discovery
-    xmpp.register_plugin('xep_0045')  # Multi-User Chat
-    xmpp.register_plugin('xep_0199')  # XMPP Ping
-
-    # Connect to the XMPP server and start processing XMPP stanzas.
-    if xmpp.connect():
-        xmpp.process(block=True)
-        print("Done")
-    else:
-        print("Unable to connect.")
+    p = MyBotProcess(xmpp)
+    p.start()
+    try:
+        p.join()
+    except KeyboardInterrupt as e:
+        pass
