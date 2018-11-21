@@ -68,6 +68,8 @@ class MyBot(sleekxmpp.ClientXMPP):
                 if date is None:
                     self.send_message(mto=msg['from'].bare, mbody="Error. Weird date/time. Docs: https://dateparser.readthedocs.io/en/latest/", mtype="groupchat")
                     return
+                else:
+                    date = date.replace(microsecond=0)
 
                 seconds = (date - now).total_seconds()
 
