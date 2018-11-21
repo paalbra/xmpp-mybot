@@ -3,7 +3,7 @@
 import datetime
 import json
 import logging
-import urllib
+import urllib.request
 
 
 def get_menu(name="Ole-Johan spiseri"):
@@ -29,7 +29,7 @@ def get_menu(name="Ole-Johan spiseri"):
         for dinner in filtered_menu[0]["dinner"]:
             _type = dinner["type"].strip(" .").upper()
             name = dinner["name"].strip(" .")
-            dinners.append(u"{}: {}.".format(_type, name))
+            dinners.append("{}: {}.".format(_type, name))
 
         menu_string = " ".join(dinners)
 
@@ -60,7 +60,7 @@ def get_restaurant(name):
 
 def get_restaurants():
     url = "https://sio.no/v1/open/restaurants/"
-    content = urllib.urlopen(url).read()
+    content = urllib.request.urlopen(url).read()
     restaurants = json.loads(content)
     logging.debug("Found {} restaurants".format(len(restaurants)))
     return restaurants

@@ -57,7 +57,7 @@ class MyBot(sleekxmpp.ClientXMPP):
                 self.send_message(mto=msg['from'].bare, mbody=message, mtype="groupchat")
 
             if msg['body'] == "!ruter":
-                for platform, departures in get_departures().iteritems():
+                for platform, departures in get_departures().items():
                     message = "Platform {}: ".format(platform)
                     message += "; ".join(departures)
                     self.send_message(mto=msg['from'].bare, mbody=message, mtype="groupchat")
@@ -87,7 +87,7 @@ class MyBot(sleekxmpp.ClientXMPP):
                     self.send_message(mto=msg['from'].bare, mbody="Error. Please set reminder to less than 1 week.", mtype="groupchat")
                     return
 
-                print("Reminder in %d sec at %s." % (seconds, date.isoformat()))
+                print("Reminder in {} sec at {}.".format(seconds, date.isoformat()))
                 self.send_message(mto=msg['from'].bare, mbody="Reminder set at %s" % date.isoformat(), mtype="groupchat")
                 Timer(seconds, self.send_message, kwargs={"mto": msg['from'].bare, "mbody": message, "mtype": "groupchat"}).start()
 
@@ -110,11 +110,11 @@ if __name__ == '__main__':
     logging.basicConfig(level=opts.loglevel, format='%(levelname)-8s %(message)s')
 
     if opts.jid is None:
-        opts.jid = raw_input("JID: ")
+        opts.jid = input("JID: ")
     if opts.room is None:
-        opts.room = raw_input("MUC room: ")
+        opts.room = input("MUC room: ")
     if opts.nick is None:
-        opts.nick = raw_input("MUC nickname: ")
+        opts.nick = input("MUC nickname: ")
 
     password = getpass.getpass("Password: ")
 

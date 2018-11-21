@@ -11,7 +11,7 @@ import requests
 
 def get_pretty_timedelta(timedelta):
     seconds = int(timedelta.total_seconds())
-    hours, minutes, seconds = seconds / 3600, (seconds % 3600) / 60, seconds % 60
+    hours, minutes, seconds = seconds // 3600, (seconds % 3600) // 60, seconds % 60
     if hours > 0:
         return "{}h {}m {}s".format(hours, minutes, seconds)
     elif minutes > 0:
@@ -58,8 +58,8 @@ def get_departures():
     return platforms
 
 if __name__ == "__main__":
-    for k, v in get_pretty_departures().iteritems():
+    for k, v in get_pretty_departures().items():
         s = "Platform {}: ".format(k)
         s += "; ".join(v)
-        print s
+        print(s)
 
