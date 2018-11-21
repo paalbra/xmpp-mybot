@@ -1,13 +1,12 @@
 #!/usr/bin/env python
-#coding: utf-8
-from pprint import pprint
-import bs4
+# coding: utf-8
 import datetime
 import dateutil
 import dateutil.relativedelta
 import dateutil.parser
 import json
 import requests
+
 
 def get_pretty_timedelta(timedelta):
     seconds = int(timedelta.total_seconds())
@@ -19,6 +18,7 @@ def get_pretty_timedelta(timedelta):
     else:
         return "{}s".format(seconds)
 
+
 def get_departures():
     # Forskningsparken
     url = r"https://reisapi.ruter.no/StopVisit/GetDepartures/3010370"
@@ -29,7 +29,6 @@ def get_departures():
 
     for departure in departures:
         monitored = departure["MonitoredVehicleJourney"]["Monitored"]
-        aimed_departure_time = departure["MonitoredVehicleJourney"]["MonitoredCall"]["AimedDepartureTime"]
         expected_departure_time = departure["MonitoredVehicleJourney"]["MonitoredCall"]["ExpectedDepartureTime"]
         departure_platform_name = departure["MonitoredVehicleJourney"]["MonitoredCall"]["DeparturePlatformName"]
         destination_name = departure["MonitoredVehicleJourney"]["DestinationName"]
@@ -47,7 +46,7 @@ def get_departures():
         if relative_time > datetime.timedelta(minutes=20):
             # Skip departures in relatively distant future
             continue
-        
+
         dep = "{} {} [{}]".format(published_line_name, destination_name, get_pretty_timedelta(relative_time))
 
         if departure_platform_name not in platforms:
@@ -57,9 +56,9 @@ def get_departures():
 
     return platforms
 
+
 if __name__ == "__main__":
-    for k, v in get_pretty_departures().items():
+    for k, v in get_departures().items():
         s = "Platform {}: ".format(k)
         s += "; ".join(v)
         print(s)
-
