@@ -3,6 +3,7 @@
 from datetime import datetime
 from threading import Timer
 import argparse
+import configparser
 import dateparser
 import multiprocessing
 import sys
@@ -108,31 +109,34 @@ class MyBotProcess(multiprocessing.Process):
 
 
 if __name__ == '__main__':
+
     parser = argparse.ArgumentParser()
 
     parser.add_argument("-q", "--quiet", help="set logging to ERROR", action="store_const", dest="loglevel", const=logging.ERROR, default=logging.INFO)
     parser.add_argument("-d", "--debug", help="set logging to DEBUG", action="store_const", dest="loglevel", const=logging.DEBUG, default=logging.INFO)
-    parser.add_argument("-j", "--jid", dest="jid", help="JID to use")
-    parser.add_argument("-r", "--room", dest="room", help="MUC room to join")
-    parser.add_argument("-n", "--nick", dest="nick", help="MUC nickname")
 
     args = parser.parse_args()
 
     logging.basicConfig(level=args.loglevel, format='%(levelname)-8s %(message)s')
 
-    if args.jid is None:
-        args.jid = input("JID: ")
-    if args.room is None:
-        args.room = input("MUC room: ")
-    if args.nick is None:
-        args.nick = input("MUC nickname: ")
+    config = configparser.ConfigParser()
+    config.read("mybot.ini")
+    jid = config["mybot"]["jid"]
 
     password = getpass.getpass("Password: ")
 
-    xmpp = MyBot(args.jid, password, args.room, args.nick)
-    p = MyBotProcess(xmpp)
-    p.start()
+    processes = []
+    for section in [section for section in config.sections() if section != "mybot"]:
+        room = section
+        nick = config[section]["nick"]
+        resource = config[section]["resource"]
+        xmpp = MyBot("{}/{}".format(jid, resource), password, room, nick)
+        process = MyBotProcess(xmpp)
+        process.start()
+        processes.append(process)
+
     try:
-        p.join()
+        for process in processes:
+            process.join()
     except KeyboardInterrupt as e:
         pass
