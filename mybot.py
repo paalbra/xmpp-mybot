@@ -114,13 +114,14 @@ if __name__ == '__main__':
 
     parser.add_argument("-q", "--quiet", help="set logging to ERROR", action="store_const", dest="loglevel", const=logging.ERROR, default=logging.INFO)
     parser.add_argument("-d", "--debug", help="set logging to DEBUG", action="store_const", dest="loglevel", const=logging.DEBUG, default=logging.INFO)
+    parser.add_argument("-c", "--config", help="alternative config path", default="mybot.ini")
 
     args = parser.parse_args()
 
     logging.basicConfig(level=args.loglevel, format='%(levelname)-8s %(message)s')
 
     config = configparser.ConfigParser()
-    config.read("mybot.ini")
+    config.read(args.config)
     jid = config["mybot"]["jid"]
 
     password = getpass.getpass("Password: ")
