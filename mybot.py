@@ -7,9 +7,12 @@ import configparser
 import dateparser
 import multiprocessing
 import sys
+import threading
+import time
 import logging
 import getpass
 
+import schedule
 import sleekxmpp
 
 from sio import get_menu
@@ -24,6 +27,8 @@ class MyBot(sleekxmpp.ClientXMPP):
         self.room = room
         self.nick = nick
 
+        self.schedule_scheduler = schedule.Scheduler()
+
         self.add_event_handler("session_start", self.start)
         self.add_event_handler("groupchat_message", self.muc_message)
         self.add_event_handler("message", self.message)
@@ -32,6 +37,14 @@ class MyBot(sleekxmpp.ClientXMPP):
         self.get_roster()
         self.send_presence(ppriority=-100)
         self.plugin['xep_0045'].joinMUC(self.room, self.nick, wait=True)
+
+        def run_continuously():
+            while True:
+                self.schedule_scheduler.run_pending()
+                time.sleep(1)
+
+        continuous_thread = threading.Thread(target=run_continuously)
+        continuous_thread.start()
 
     def muc_message(self, msg):
         if msg['mucnick'] != self.nick:
@@ -48,6 +61,33 @@ class MyBot(sleekxmpp.ClientXMPP):
                 else:
                     message = "Unable to get menu :("
                 self.send_message(mto=msg['from'].bare, mbody=message, mtype="groupchat")
+
+            if msg['body'].startswith("!schedule"):
+                response = None
+
+                # TODO: Fix this horrible hacky command
+
+                if msg['body'] == "!schedule jobs":
+                    for job in self.schedule_scheduler.jobs or ["No jobs"]:
+                        self.send_message(mto=msg['from'].bare, mbody=str(job), mtype="groupchat")
+                if msg['body'].startswith("!schedule every "):
+                    try:
+                        _, _, day, time, message = msg['body'].split(" ", 4)
+                        if day not in ("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"):
+                            raise Exception
+                        job = self.schedule_scheduler.every()
+                        job.start_day = day
+                        job.weeks.at(time).do(self.send_message, mto=msg['from'].bare, mbody=message, mtype="groupchat")
+                        response = "Job added"
+                    except Exception as e:
+                        response = "Error"
+                        pass
+                if msg['body'] == "!schedule clear":
+                    self.schedule_scheduler.clear()
+                    response = "Schedule cleared"
+
+                if response:
+                    self.send_message(mto=msg['from'].bare, mbody=response, mtype="groupchat")
 
             if msg['body'] == "!ruter":
                 for platform, departures in get_departures().items():
