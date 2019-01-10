@@ -1,9 +1,32 @@
 #!/usr/bin/python
 # coding: utf-8
 import datetime
+import difflib
 import json
 import logging
+import re
 import urllib.request
+
+
+def get_close_names(name, names):
+    # Exact match
+    if name in names:
+        return [name]
+
+    # Partial exact matches
+    possible_matches = []
+    for n in names:
+        if re.search(name, n, re.IGNORECASE):
+            possible_matches.append(n)
+    if possible_matches:
+        return possible_matches
+
+    # difflib matches
+    possible_matches = difflib.get_close_matches(name, names, cutoff=0.4)
+    if possible_matches:
+        return possible_matches
+
+    return None
 
 
 def get_menu(name="Ole-Johan spiseri"):
@@ -56,6 +79,14 @@ def get_restaurant(name):
     else:
         # TODO: Handle?
         return None
+
+
+def get_restaurant_names(name):
+    restaurants = get_restaurants()
+    restaurant_names = [r["name"] for r in restaurants]
+    close_restaurant_names = get_close_names(name, restaurant_names)
+
+    return close_restaurant_names
 
 
 def get_restaurants():

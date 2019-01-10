@@ -6,7 +6,6 @@ import argparse
 import configparser
 import dateparser
 import multiprocessing
-import sys
 import threading
 import time
 import logging
@@ -15,7 +14,7 @@ import getpass
 import schedule
 import sleekxmpp
 
-from sio import get_menu
+from sio import get_menu, get_restaurant_names
 from reisapi import get_departures
 
 
@@ -54,12 +53,20 @@ class MyBot(sleekxmpp.ClientXMPP):
                 self.send_message(mto=msg['from'].bare, mbody=message, mtype="groupchat")
 
             if msg['body'].startswith("!lunch "):
-                restaurant = msg['body'].split(" ", 1)[1]
-                menu = get_menu(restaurant)
-                if menu:
-                    message = menu
+                restaurant_name = msg['body'].split(" ", 1)[1]
+                restaurant = get_restaurant_names(restaurant_name)
+                if not restaurant:
+                    message = "No such restaurant"
+                elif len(restaurant) > 1:
+                    restaurant_names = ", ".join(restaurant)
+                    message = "Did you mean?: {}".format(restaurant_names)
                 else:
-                    message = "Unable to get menu :("
+                    # Single restaurant
+                    menu = get_menu(restaurant[0])
+                    if menu:
+                        message = "{}: {}".format(restaurant[0], menu)
+                    else:
+                        message = "Unable to get menu from: {}".format(restaurant[0])
                 self.send_message(mto=msg['from'].bare, mbody=message, mtype="groupchat")
 
             if msg['body'].startswith("!schedule"):
