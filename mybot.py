@@ -10,6 +10,7 @@ import threading
 import time
 import logging
 import getpass
+import re
 
 import schedule
 import sleekxmpp
@@ -25,6 +26,7 @@ class MyBot(sleekxmpp.ClientXMPP):
 
         self.room = room
         self.nick = nick
+        self.command_prefix = "!"
 
         self.schedule_scheduler = schedule.Scheduler()
 
@@ -46,92 +48,104 @@ class MyBot(sleekxmpp.ClientXMPP):
         continuous_thread.start()
 
     def muc_message(self, msg):
-        if msg['mucnick'] != self.nick:
+        if msg['mucnick'] == self.nick:
+            # Ignore messages made by self
+            return
 
-            if msg['body'] == "!lunch":
-                message = get_menu()
-                self.send_message(mto=msg['from'].bare, mbody=message, mtype="groupchat")
+        if msg['body'].startswith(self.command_prefix):
+            message = msg['body'][len(self.command_prefix):]
+            match = re.match("(?P<command>[a-z]+)(?P<argument>.*)?", message)
+            if not match:
+                # This is not a command
+                return
+            command = match.group("command")
+            argument = match.group("argument").strip()
 
-            if msg['body'].startswith("!lunch "):
-                restaurant_name = msg['body'].split(" ", 1)[1]
+        logging.debug(f"Got command '{command}' with argument '{argument}'")
+
+        if command == "lunch":
+            if not argument:
+                response = get_menu()
+            else:
+                restaurant_name = argument
                 restaurant = get_restaurant_names(restaurant_name)
                 if not restaurant:
-                    message = "No such restaurant"
+                    response = "No such restaurant"
                 elif len(restaurant) > 1:
                     restaurant_names = ", ".join(restaurant)
-                    message = "Did you mean?: {}".format(restaurant_names)
+                    response = "Did you mean?: {}".format(restaurant_names)
                 else:
                     # Single restaurant
                     menu = get_menu(restaurant[0])
                     if menu:
-                        message = "{}: {}".format(restaurant[0], menu)
+                        response = "{}: {}".format(restaurant[0], menu)
                     else:
-                        message = "Unable to get menu from: {}".format(restaurant[0])
-                self.send_message(mto=msg['from'].bare, mbody=message, mtype="groupchat")
+                        response = "Unable to get menu from: {}".format(restaurant[0])
+            self.send_message(mto=msg['from'].bare, mbody=response, mtype="groupchat")
 
-            if msg['body'].startswith("!schedule"):
-                response = None
+        if command == "schedule":
+            response = None
 
-                # TODO: Fix this horrible hacky command
+            # TODO: Fix this horrible hacky command
 
-                if msg['body'] == "!schedule jobs":
-                    for job in self.schedule_scheduler.jobs or ["No jobs"]:
-                        self.send_message(mto=msg['from'].bare, mbody=str(job), mtype="groupchat")
-                if msg['body'].startswith("!schedule every "):
-                    try:
-                        _, _, day, time, message = msg['body'].split(" ", 4)
-                        if day not in ("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"):
-                            raise Exception
-                        job = self.schedule_scheduler.every()
-                        job.start_day = day
-                        job.weeks.at(time).do(self.send_message, mto=msg['from'].bare, mbody=message, mtype="groupchat")
-                        response = "Job added"
-                    except Exception as e:
-                        response = "Error"
-                        pass
-                if msg['body'] == "!schedule clear":
-                    self.schedule_scheduler.clear()
-                    response = "Schedule cleared"
-
-                if response:
-                    self.send_message(mto=msg['from'].bare, mbody=response, mtype="groupchat")
-
-            if msg['body'] == "!ruter":
-                for platform, departures in get_departures().items():
-                    message = "Platform {}: ".format(platform)
-                    message += "; ".join(departures)
-                    self.send_message(mto=msg['from'].bare, mbody=message, mtype="groupchat")
-
-            if msg['body'].startswith("!reminder "):
-                now = datetime.now()
-                max_seconds = 3600 * 24 * 7  # Do not create reminders > 1 week
+            if argument == "jobs":
+                for job in self.schedule_scheduler.jobs or ["No jobs"]:
+                    self.send_message(mto=msg['from'].bare, mbody=str(job), mtype="groupchat")
+            if argument.startswith("every "):
                 try:
-                    date_string, message = [s.strip() for s in msg['body'][10:].split(";", 1)]
-                except:
-                    self.send_message(mto=msg['from'].bare, mbody="Error. Expected: \"!reminder <date/time string>; <reminder message>\" ", mtype="groupchat")
-                    return
+                    _, day, time, text = argument.split(" ", 3)
+                    if day not in ("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"):
+                        raise Exception
+                    job = self.schedule_scheduler.every()
+                    job.start_day = day
+                    job.weeks.at(time).do(self.send_message, mto=msg['from'].bare, mbody=text, mtype="groupchat")
+                    response = "Job added"
+                except Exception as e:
+                    response = "Error"
+                    pass
+            if argument == "clear":
+                self.schedule_scheduler.clear()
+                response = "Schedule cleared"
 
-                date = dateparser.parse(date_string, settings={'PREFER_DATES_FROM': 'future'})
-                message = "%s: %s" % (msg["from"].resource, message)
+            if response:
+                self.send_message(mto=msg['from'].bare, mbody=response, mtype="groupchat")
 
-                if date is None:
-                    self.send_message(mto=msg['from'].bare, mbody="Error. Weird date/time. Docs: https://dateparser.readthedocs.io/en/latest/", mtype="groupchat")
-                    return
-                else:
-                    date = date.replace(microsecond=0)
+        if command == "ruter":
+            for platform, departures in get_departures().items():
+                response = "Platform {}: ".format(platform)
+                response += "; ".join(departures)
+                self.send_message(mto=msg['from'].bare, mbody=response, mtype="groupchat")
 
-                seconds = (date - now).total_seconds()
+        if command == "reminder":
+            now = datetime.now()
+            max_seconds = 3600 * 24 * 7  # Do not create reminders > 1 week
+            try:
+                date_string, text = [s.strip() for s in argument.split(";", 1)]
+            except:
+                self.send_message(mto=msg['from'].bare, mbody="Error. Expected: \"!reminder <date/time string>; <reminder text>\" ", mtype="groupchat")
+                return
 
-                if seconds < 0:
-                    self.send_message(mto=msg['from'].bare, mbody="Error. Can't remind you in the past.", mtype="groupchat")
-                    return
-                elif seconds > max_seconds:
-                    self.send_message(mto=msg['from'].bare, mbody="Error. Please set reminder to less than 1 week.", mtype="groupchat")
-                    return
+            date = dateparser.parse(date_string, settings={'PREFER_DATES_FROM': 'future'})
+            response = "%s: %s" % (msg["from"].resource, text)
 
-                print("Reminder in {} sec at {}.".format(seconds, date.isoformat()))
-                self.send_message(mto=msg['from'].bare, mbody="Reminder set at %s" % date.isoformat(), mtype="groupchat")
-                Timer(seconds, self.send_message, kwargs={"mto": msg['from'].bare, "mbody": message, "mtype": "groupchat"}).start()
+            if date is None:
+                self.send_message(mto=msg['from'].bare, mbody="Error. Weird date/time. Docs: https://dateparser.readthedocs.io/en/latest/", mtype="groupchat")
+                return
+            else:
+                date = date.replace(microsecond=0)
+
+            seconds = (date - now).total_seconds()
+
+            if seconds < 0:
+                self.send_message(mto=msg['from'].bare, mbody="Error. Can't remind you in the past.", mtype="groupchat")
+                return
+            elif seconds > max_seconds:
+                self.send_message(mto=msg['from'].bare, mbody="Error. Please set reminder to less than 1 week.", mtype="groupchat")
+                return
+
+            print("Reminder in {} sec at {}.".format(seconds, date.isoformat()))
+            self.send_message(mto=msg['from'].bare, mbody="Reminder set at %s" % date.isoformat(), mtype="groupchat")
+            Timer(seconds, self.send_message, kwargs={"mto": msg['from'].bare, "mbody": response, "mtype": "groupchat"}).start()
 
     def message(self, msg):
         if msg['type'] in ('chat', 'normal'):
