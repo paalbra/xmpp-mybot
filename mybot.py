@@ -18,6 +18,8 @@ import sleekxmpp
 from sio import get_menu, get_restaurant_names
 from reisapi import get_departures
 
+logger = logging.getLogger(__name__)
+
 
 class MyBot(sleekxmpp.ClientXMPP):
 
@@ -61,7 +63,7 @@ class MyBot(sleekxmpp.ClientXMPP):
             command = match.group("command")
             argument = match.group("argument").strip()
 
-        logging.debug(f"Got command '{command}' with argument '{argument}'")
+        logger.debug(f"Got command '{command}' with argument '{argument}'")
 
         if command == "lunch":
             if not argument:
@@ -179,7 +181,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    logging.basicConfig(level=args.loglevel, format='%(levelname)-8s %(message)s')
+    logging.basicConfig(level=args.loglevel, format='[%(asctime)s][%(name)s][%(levelname)s] %(message)s')
 
     config = configparser.ConfigParser()
     config.read(args.config)

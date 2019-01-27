@@ -7,6 +7,8 @@ import logging
 import re
 import urllib.request
 
+logger = logging.getLogger(__name__)
+
 
 def get_close_names(name, names):
     # Exact match
@@ -44,7 +46,7 @@ def get_menu(name="Ole-Johan spiseri"):
 
     filtered_menu = [m for m in restaurant["menu"] if m["date"] == today]
 
-    logging.debug("Found {} menu in restaurant ({})".format(len(filtered_menu), name))
+    logger.debug("Found {} menu in restaurant ({})".format(len(filtered_menu), name))
 
     if len(filtered_menu) == 1:
         # Found todays menu
@@ -69,7 +71,7 @@ def get_restaurant(name):
     restaurants = get_restaurants()
     filtered_restaurants = [r for r in restaurants if r["name"] == name]
 
-    logging.debug("Found {} restaurants from name ({})".format(len(filtered_restaurants), name))
+    logger.debug("Found {} restaurants from name ({})".format(len(filtered_restaurants), name))
 
     if len(filtered_restaurants) == 1:
         return filtered_restaurants[0]
@@ -93,5 +95,5 @@ def get_restaurants():
     url = "https://sio.no/v1/open/restaurants/"
     content = urllib.request.urlopen(url).read()
     restaurants = json.loads(content)
-    logging.debug("Found {} restaurants".format(len(restaurants)))
+    logger.debug("Found {} restaurants".format(len(restaurants)))
     return restaurants
