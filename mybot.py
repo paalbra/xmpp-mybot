@@ -137,10 +137,10 @@ class MyBot(sleekxmpp.ClientXMPP):
             seconds = (date - now).total_seconds()
 
             if seconds < 0:
-                self.send_message(mto=msg['from'].bare, mbody="Error. Can't remind you in the past.", mtype="groupchat")
+                self.send_message(mto=msg['from'].bare, mbody="Error. Can't remind you in the past (%s)." % date.isoformat(), mtype="groupchat")
                 return
             elif seconds > max_seconds:
-                self.send_message(mto=msg['from'].bare, mbody="Error. Please set reminder to less than 1 week.", mtype="groupchat")
+                self.send_message(mto=msg['from'].bare, mbody="Error. Please set reminder to less than 1 week (%s)." % date.isoformat(), mtype="groupchat")
                 return
 
             print("Reminder in {} sec at {}.".format(seconds, date.isoformat()))
