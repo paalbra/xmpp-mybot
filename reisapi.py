@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 # coding: utf-8
 import datetime
-import dateutil
-import dateutil.relativedelta
-import dateutil.parser
 import logging
 import json
 import requests
+
+import dateutil
+import dateutil.relativedelta
+import dateutil.parser
 
 logger = logging.getLogger(__name__)
 

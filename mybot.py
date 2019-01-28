@@ -1,10 +1,7 @@
 #!/usr/bin/python
 # coding: utf-8
-from datetime import datetime
-from threading import Timer
 import argparse
 import configparser
-import dateparser
 import multiprocessing
 import threading
 import time
@@ -12,6 +9,7 @@ import logging
 import getpass
 import re
 
+import dateparser
 import schedule
 import sleekxmpp
 
@@ -122,7 +120,7 @@ class MyBot(sleekxmpp.ClientXMPP):
                 self.send_message(mto=msg['from'].bare, mbody=response, mtype="groupchat")
 
         if command == "reminder":
-            now = datetime.now()
+            now = datetime.datetime.now()
             max_seconds = 3600 * 24 * 7  # Do not create reminders > 1 week
             try:
                 date_string, text = [s.strip() for s in argument.split(";", 1)]
@@ -150,7 +148,7 @@ class MyBot(sleekxmpp.ClientXMPP):
 
             print("Reminder in {} sec at {}.".format(seconds, date.isoformat()))
             self.send_message(mto=msg['from'].bare, mbody="Reminder set at %s" % date.isoformat(), mtype="groupchat")
-            Timer(seconds, self.send_message, kwargs={"mto": msg['from'].bare, "mbody": response, "mtype": "groupchat"}).start()
+            threading.Timer(seconds, self.send_message, kwargs={"mto": msg['from'].bare, "mbody": response, "mtype": "groupchat"}).start()
 
     def message(self, msg):
         if msg['type'] in ('chat', 'normal'):
