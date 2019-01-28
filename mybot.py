@@ -62,6 +62,9 @@ class MyBot(sleekxmpp.ClientXMPP):
                 return
             command = match.group("command")
             argument = match.group("argument").strip()
+        else:
+            # This is not a command
+            return
 
         logger.debug(f"Got command '{command}' with argument '{argument}'")
 
